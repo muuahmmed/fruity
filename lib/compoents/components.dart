@@ -31,7 +31,7 @@ Widget defaultTextField({
   required IconData prefix,
   IconData? suffix,
   Function? suffixPressed,
-  bool isClickable = true,
+  bool isClickable = true, required int width,
 }) => TextFormField();
 
 void showToast({required text, required ToastStates state}) =>

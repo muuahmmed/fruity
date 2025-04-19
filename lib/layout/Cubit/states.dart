@@ -29,3 +29,5 @@ class ShopErrorCategoriesState extends ShopStates {
 
   ShopErrorCategoriesState(this.error);
 }
+
+class ShopChangeFavouriteState extends ShopStates {}

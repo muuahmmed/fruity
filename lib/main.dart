@@ -2,12 +2,12 @@ import 'package:firebase_core/firebase_core.dart' show Firebase;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fruity/Register/cubit/bloc_observer.dart' show MyBlocObserver;
+import 'package:fruity/layout/home_screen.dart';
 import 'package:google_sign_in/google_sign_in.dart' show GoogleSignIn;
 import 'Login/login_screen.dart';
 import 'compoents/components.dart' show setup;
 import 'firebase_options.dart' show DefaultFirebaseOptions;
 import 'layout/Cubit/cubit.dart';
-import 'layout/layout_screen.dart';
 import 'network/local/cache helper.dart';
 import 'onBoarding/onboarding_screen.dart';
 
@@ -42,7 +42,7 @@ void main() async {
   if (onBoarding != null && onBoarding) {
     if ((token != null && token.isNotEmpty) ||
         (isGoogleSignedIn != null && isGoogleSignedIn)) {
-      startWidget = const LayoutScreen();
+      startWidget = const Home();
     } else {
       startWidget = const LoginScreen();
     }

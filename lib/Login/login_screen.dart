@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fruity/Login/cubit/login_cubit.dart';
 import 'package:fruity/Login/cubit/login_states.dart';
-import 'package:fruity/layout/layout_screen.dart';
 import '../Register/register_screen.dart';
 import '../compoents/components.dart';
+import '../layout/home_screen.dart';
 import '../network/domain_layer/repos/auth_repo.dart';
 import '../network/local/cache helper.dart';
 
@@ -129,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: BlocListener<ShopLoginCubit, ShopLoginStates>(
         listener: (context, state) {
           if (state is ShopLoginSuccessState) {
-            navigateAndFinish(context, const LayoutScreen());
+            navigateAndFinish(context, const Home());
             showToast(text: 'Login Successful', state: ToastStates.SUCCESS);
           } else if (state is ShopLoginErrorState) {
             showToast(text: state.error, state: ToastStates.ERROR);

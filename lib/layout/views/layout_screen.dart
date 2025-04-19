@@ -1,4 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:fruity/layout/Cubit/cubit.dart';
+import '../Cubit/states.dart';
 
 class LayoutScreen extends StatefulWidget {
   const LayoutScreen({super.key});
@@ -13,8 +17,6 @@ class _LayoutScreenState extends State<LayoutScreen>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _navBarAnimation;
-  late int _currentIndex = 0;
   bool _showAllProducts = false;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -136,13 +138,6 @@ class _LayoutScreenState extends State<LayoutScreen>
       ),
     );
 
-    _navBarAnimation = Tween<double>(begin: 1, end: 0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.5, 1.0, curve: Curves.easeInOut),
-      ),
-    );
-
     _animationController.forward();
   }
 
@@ -158,223 +153,209 @@ class _LayoutScreenState extends State<LayoutScreen>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
-
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverAppBar(
-              expandedHeight: 140,
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                background: Container(
-                  // decoration: BoxDecoration(
-                  //   gradient: LinearGradient(
-                  //     begin: Alignment.topLeft,
-                  //     end: Alignment.bottomRight,
-                  //     colors: [Colors.green[400]!, Colors.green[600]!],
-                  //   ),
-                  // ),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: kToolbarHeight),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Good Morning",
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: Colors.black,
+    return BlocConsumer<ShopCubit, ShopStates>(
+      listener: (context, state) {},
+      builder: (context, state) {
+        final user = FirebaseAuth.instance.currentUser;
+        return Scaffold(
+          backgroundColor: Colors.grey[50],
+          body: SafeArea(
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverAppBar(
+                  expandedHeight: 140,
+                  flexibleSpace: FlexibleSpaceBar(
+                    collapseMode: CollapseMode.parallax,
+                    background: Column(
+                      children: [
+                        const SizedBox(height: kToolbarHeight),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Good Morning",
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: Colors.black,
+                                    ),
                                   ),
+                                  Text(
+                                    user!.displayName ?? 'User',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const CircleAvatar(
+                                radius: 22,
+                                backgroundImage: NetworkImage(
+                                  'https://i.pravatar.cc/300',
                                 ),
-                                Text(
-                                  "Ahmed Mostafa",
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    color: Colors.black,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  pinned: true,
+                  leading: IconButton(
+                    icon: const Icon(Icons.menu, color: Colors.black),
+                    onPressed: () {},
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Badge(
+                        smallSize: 8,
+                        backgroundColor: Colors.red,
+                        child: Icon(
+                          Icons.notifications_none,
+                          color: Colors.black,
+                        ),
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildSearchBar(theme),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: _buildPromoBanner(screenWidth),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      SlideTransition(
+                        position: _slideAnimation,
+                        child: FadeTransition(
+                          opacity: _fadeAnimation,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Best Sellers',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                icon: Icon(Icons.sort, color: Colors.grey[600]),
+                                onSelected: (value) {
+                                  _sortProducts(value);
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return [
+                                    const PopupMenuItem(
+                                      value: 'price_low',
+                                      child: Text('Price: Low to High'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'price_high',
+                                      child: Text('Price: High to Low'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'rating',
+                                      child: Text('Top Rated'),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'name',
+                                      child: Text('Alphabetical'),
+                                    ),
+                                  ];
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ]),
+                  ),
+                ),
+
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount:
+                          _showAllProducts && screenWidth > 600 ? 3 : 2,
+                      mainAxisExtent: 250,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => _buildAnimatedProductCard(
+                        index,
+                        ShopCubit.get(context),
+                      ),
+                      childCount: _showAllProducts ? allFruits.length : 4,
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  sliver: SliverToBoxAdapter(
+                    child:
+                        _showAllProducts
+                            ? const SizedBox()
+                            : Center(
+                              child: TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _showAllProducts = true;
+                                  });
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    _scrollController.animateTo(
+                                      0,
+                                      duration: const Duration(
+                                        milliseconds: 500,
+                                      ),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  });
+                                },
+                                child: Text(
+                                  'View All Products',
+                                  style: TextStyle(
+                                    color: Colors.green[700],
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ],
-                            ),
-                            const CircleAvatar(
-                              radius: 22,
-                              backgroundImage: NetworkImage(
-                                'https://i.pravatar.cc/300',
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
-                ),
-              ),
-              pinned: true,
-              leading: IconButton(
-                icon: const Icon(Icons.menu, color: Colors.black),
-                onPressed: () {},
-              ),
-              actions: [
-                IconButton(
-                  icon: const Badge(
-                    smallSize: 8,
-                    backgroundColor: Colors.red,
-                    child: Icon(Icons.notifications_none, color: Colors.black),
-                  ),
-                  onPressed: () {},
                 ),
               ],
             ),
-
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildSearchBar(theme),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: _buildPromoBanner(screenWidth),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  SlideTransition(
-                    position: _slideAnimation,
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Best Sellers',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          PopupMenuButton<String>(
-                            icon: Icon(Icons.sort, color: Colors.grey[600]),
-                            onSelected: (value) {
-                              _sortProducts(value);
-                            },
-                            itemBuilder: (BuildContext context) {
-                              return [
-                                const PopupMenuItem(
-                                  value: 'price_low',
-                                  child: Text('Price: Low to High'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'price_high',
-                                  child: Text('Price: High to Low'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'rating',
-                                  child: Text('Top Rated'),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'name',
-                                  child: Text('Alphabetical'),
-                                ),
-                              ];
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ]),
-              ),
-            ),
-
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverGrid(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _showAllProducts && screenWidth > 600 ? 3 : 2,
-                  mainAxisExtent: 250,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => _buildAnimatedProductCard(index),
-                  childCount: _showAllProducts ? allFruits.length : 4,
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.only(bottom: 20),
-              sliver: SliverToBoxAdapter(
-                child:
-                    _showAllProducts
-                        ? const SizedBox()
-                        : Center(
-                          child: TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _showAllProducts = true;
-                              });
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                _scrollController.animateTo(
-                                  0,
-                                  duration: const Duration(milliseconds: 500),
-                                  curve: Curves.easeInOut,
-                                );
-                              });
-                            },
-                            child: Text(
-                              'View All Products',
-                              style: TextStyle(
-                                color: Colors.green[700],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-              ),
-            ),
-          ],
-        ),
-      ),
-
-      floatingActionButton: ScaleTransition(
-        scale: _scaleAnimation,
-        child: FloatingActionButton(
-          onPressed: () {},
-          backgroundColor: Colors.green[600],
-          elevation: 4,
-          child: const Icon(Icons.shopping_basket, color: Colors.white),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-
-      bottomNavigationBar: AnimatedBuilder(
-        animation: _navBarAnimation,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, 50 * _navBarAnimation.value),
-            child: Opacity(opacity: 1 - _navBarAnimation.value, child: child),
-          );
-        },
-        child: _buildBottomNavBar(),
-      ),
+          ),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+        );
+      },
     );
   }
 
@@ -532,11 +513,10 @@ class _LayoutScreenState extends State<LayoutScreen>
     );
   }
 
-  Widget _buildAnimatedProductCard(int index) {
+  Widget _buildAnimatedProductCard(int index, ShopCubit cubit) {
     final fruit = allFruits[index];
     final totalItems = _showAllProducts ? allFruits.length : 4;
-    final start =
-        0.4 + (0.5 * index / totalItems); // Distribute animations evenly
+    final start = 0.4 + (0.5 * index / totalItems);
 
     return AnimatedBuilder(
       animation: _animationController,
@@ -549,8 +529,8 @@ class _LayoutScreenState extends State<LayoutScreen>
             CurvedAnimation(
               parent: _animationController,
               curve: Interval(
-                start.clamp(0.0, 0.9), // Ensure begin is <= end
-                (start + 0.1).clamp(0.1, 1.0), // Ensure end is <= 1.0
+                start.clamp(0.0, 0.9),
+                (start + 0.1).clamp(0.1, 1.0),
                 curve: Curves.easeOut,
               ),
             ),
@@ -625,10 +605,7 @@ class _LayoutScreenState extends State<LayoutScreen>
                             right: 8,
                             child: GestureDetector(
                               onTap: () {
-                                setState(() {
-                                  fruit['isFavorite'] =
-                                      !(fruit['isFavorite'] as bool);
-                                });
+                                cubit.toggleFavourite(fruit);
                               },
                               child: Container(
                                 padding: const EdgeInsets.all(4),
@@ -637,11 +614,16 @@ class _LayoutScreenState extends State<LayoutScreen>
                                   shape: BoxShape.circle,
                                 ),
                                 child: Icon(
-                                  fruit['isFavorite'] as bool
+                                  cubit.favourites.any(
+                                        (item) => item['name'] == fruit['name'],
+                                      )
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                   color:
-                                      fruit['isFavorite'] as bool
+                                      cubit.favourites.any(
+                                            (item) =>
+                                                item['name'] == fruit['name'],
+                                          )
                                           ? Colors.red
                                           : Colors.grey,
                                   size: 20,
@@ -920,103 +902,6 @@ class _LayoutScreenState extends State<LayoutScreen>
           ),
         );
       },
-    );
-  }
-
-  Widget _buildBottomNavBar() {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.green[700],
-          unselectedItemColor: Colors.grey[600],
-          showSelectedLabels: true,
-          showUnselectedLabels: true,
-          elevation: 0,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: [
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color:
-                      _currentIndex == 0
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.home),
-              ),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color:
-                      _currentIndex == 1
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.favorite_border),
-              ),
-              label: 'Favorites',
-            ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color:
-                      _currentIndex == 2
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Badge(
-                  label: Text('3'),
-                  backgroundColor: Colors.red,
-                  child: Icon(Icons.shopping_cart),
-                ),
-              ),
-              label: 'Cart',
-            ),
-            BottomNavigationBarItem(
-              icon: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color:
-                      _currentIndex == 3
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.person),
-              ),
-              label: 'Profile',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
