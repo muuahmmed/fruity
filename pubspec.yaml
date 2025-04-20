@@ -29,6 +29,10 @@ environment:
 # versions available, run `flutter pub outdated`.
 
 dependencies:
+  device_info_plus:
+  permission_handler:
+  firebase_storage:
+  image_picker:
   cloud_firestore:
   google_sign_in:
   flutter_facebook_auth:
